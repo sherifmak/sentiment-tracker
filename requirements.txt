@@ -1,0 +1,19 @@
+# Core data
+pandas>=2.0
+numpy>=1.24
+
+# NLP / Sentiment (lightweight)
+textblob>=0.18
+
+# Web dashboard
+dash>=2.14
+dash-bootstrap-components>=1.5
+plotly>=5.18
+
+# HTTP
+requests>=2.31
+beautifulsoup4>=4.12
+
+# Utilities
+python-dotenv>=1.0
+apscheduler>=3.10

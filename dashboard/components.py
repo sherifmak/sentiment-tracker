@@ -349,3 +349,169 @@ def indicators_table(tech_data: dict) -> dbc.Table:
         size="sm",
         style={"backgroundColor": "transparent"},
     )
+
+
+def comparison_chart(
+    dataframes: dict[str, tuple[str, "pd.DataFrame"]], title: str, normalize: bool = False
+) -> dcc.Graph:
+    """Multi-line chart comparing several tickers. dataframes = {ticker: (name, df)}."""
+    import pandas as pd
+
+    fig = go.Figure()
+    colors = ["#42a5f5", "#ffa726", "#66bb6a", "#ef5350", "#ab47bc", "#26c6da"]
+
+    for i, (ticker, (name, df)) in enumerate(dataframes.items()):
+        if df.empty or "Close" not in df.columns:
+            continue
+        series = df["Close"]
+        if normalize and len(series) > 0:
+            series = (series / series.iloc[0] - 1) * 100  # % change from start
+        color = colors[i % len(colors)]
+        fig.add_trace(go.Scatter(
+            x=df.index, y=series, name=f"{name} ({ticker})",
+            line=dict(color=color, width=2),
+        ))
+
+    y_title = "% Change" if normalize else "Price"
+    fig.update_layout(
+        title=title,
+        height=400,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="#1a1a2e",
+        font={"color": "white"},
+        xaxis=dict(gridcolor="#333"),
+        yaxis=dict(gridcolor="#333", title=y_title),
+        legend=dict(bgcolor="rgba(0,0,0,0)", font={"size": 10}),
+        margin=dict(t=40, b=40, l=60, r=20),
+        hovermode="x unified",
+    )
+    return dcc.Graph(figure=fig)
+
+
+def price_table(tickers_data: dict, symbols: dict) -> dbc.Table:
+    """Table showing price, change, RSI, and signal for each ticker."""
+    rows = []
+    for ticker, data in tickers_data.items():
+        name = symbols.get(ticker, ticker)
+        score = data.get("composite_score", 0)
+        signal = data.get("signal", "NEUTRAL")
+        color = data.get("signal_color", "#ffd740")
+        tech = data.get("components", {}).get("technical", {}).get("detail", {})
+        rsi_data = tech.get("rsi", {})
+        rsi_val = rsi_data.get("raw", "—")
+        ma_data = tech.get("moving_averages", {})
+        ma_label = ma_data.get("label", "—")
+        macd_data = tech.get("macd", {})
+        macd_label = macd_data.get("label", "—")
+
+        # Color RSI
+        rsi_color = "#69f0ae" if isinstance(rsi_val, (int, float)) and rsi_val < 40 else \
+                    "#ff8a65" if isinstance(rsi_val, (int, float)) and rsi_val > 60 else "#aaa"
+
+        rows.append(
+            html.Tr([
+                html.Td(ticker, style={"color": "#ccc", "fontWeight": "bold"}),
+                html.Td(name, style={"color": "#888"}),
+                html.Td(str(rsi_val), style={"color": rsi_color}),
+                html.Td(macd_label, style={"color": "#aaa", "fontSize": "0.8rem"}),
+                html.Td(ma_label, style={"color": "#aaa", "fontSize": "0.8rem"}),
+                html.Td(signal, style={"color": color, "fontWeight": "bold"}),
+                html.Td(f"{score:+.3f}", style={"color": color}),
+            ])
+        )
+
+    return dbc.Table(
+        [
+            html.Thead(html.Tr([
+                html.Th("Ticker", style={"color": "#888"}),
+                html.Th("Name", style={"color": "#888"}),
+                html.Th("RSI", style={"color": "#888"}),
+                html.Th("MACD", style={"color": "#888"}),
+                html.Th("Trend", style={"color": "#888"}),
+                html.Th("Signal", style={"color": "#888"}),
+                html.Th("Score", style={"color": "#888"}),
+            ])),
+            html.Tbody(rows),
+        ],
+        bordered=False, dark=True, hover=True, responsive=True, size="sm",
+        style={"backgroundColor": "transparent"},
+    )
+
+
+def fx_rate_table(tickers_data: dict, symbols: dict, quotes: dict) -> dbc.Table:
+    """FX-specific table showing rate, daily change, and signal."""
+    rows = []
+    for ticker, data in tickers_data.items():
+        name = symbols.get(ticker, ticker)
+        signal = data.get("signal", "NEUTRAL")
+        color = data.get("signal_color", "#ffd740")
+        score = data.get("composite_score", 0)
+
+        quote = quotes.get(ticker, {})
+        rate = quote.get("price")
+        change_pct = quote.get("change_pct", 0)
+
+        rate_str = f"{rate:.4f}" if rate and rate < 10 else f"{rate:.2f}" if rate else "—"
+        chg_color = "#69f0ae" if change_pct > 0 else "#ff8a65" if change_pct < 0 else "#aaa"
+
+        rows.append(
+            html.Tr([
+                html.Td(name, style={"color": "#ccc", "fontWeight": "bold"}),
+                html.Td(rate_str, style={"color": "white", "fontSize": "1.05rem"}),
+                html.Td(f"{change_pct:+.2f}%", style={"color": chg_color, "fontWeight": "bold"}),
+                html.Td(signal, style={"color": color, "fontWeight": "bold"}),
+                html.Td(f"{score:+.3f}", style={"color": color}),
+            ])
+        )
+
+    return dbc.Table(
+        [
+            html.Thead(html.Tr([
+                html.Th("Pair", style={"color": "#888"}),
+                html.Th("Rate", style={"color": "#888"}),
+                html.Th("Daily Chg", style={"color": "#888"}),
+                html.Th("Signal", style={"color": "#888"}),
+                html.Th("Score", style={"color": "#888"}),
+            ])),
+            html.Tbody(rows),
+        ],
+        bordered=False, dark=True, hover=True, responsive=True, size="sm",
+        style={"backgroundColor": "transparent"},
+    )
+
+
+def daily_change_heatmap(quotes: dict, symbols: dict) -> dcc.Graph:
+    """Heatmap of daily % changes for a set of tickers."""
+    tickers = list(quotes.keys())
+    names = [symbols.get(t, t) for t in tickers]
+    changes = [quotes[t].get("change_pct", 0) or 0 for t in tickers]
+
+    # Single-row heatmap
+    fig = go.Figure(go.Heatmap(
+        z=[changes],
+        x=names,
+        y=["Daily Change"],
+        text=[[f"{c:+.2f}%" for c in changes]],
+        texttemplate="%{text}",
+        textfont={"size": 12, "color": "white"},
+        colorscale=[
+            [0, "#ff1744"],
+            [0.4, "#ff8a65"],
+            [0.5, "#333"],
+            [0.6, "#69f0ae"],
+            [1, "#00c853"],
+        ],
+        zmid=0,
+        showscale=False,
+    ))
+
+    fig.update_layout(
+        height=100,
+        margin=dict(t=10, b=30, l=10, r=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"color": "white"},
+        xaxis=dict(side="bottom"),
+        yaxis=dict(visible=False),
+    )
+    return dcc.Graph(figure=fig, config={"displayModeBar": False})

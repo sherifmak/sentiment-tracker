@@ -1,14 +1,17 @@
 name: Update Dashboard
 
 on:
-  # Rebuild every 6 hours during market days
+  # Hourly during US market hours (9:30am-4pm ET = 13:00-21:00 UTC)
   schedule:
-    - cron: "0 */6 * * 1-5"
+    - cron: "0 13-21 * * 1-5"
   # Manual trigger
   workflow_dispatch:
   # Also rebuild on push to main (for code changes)
   push:
     branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: write

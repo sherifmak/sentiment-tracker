@@ -23,6 +23,7 @@ from dashboard.components import (
     rsi_chart,
     signal_card,
     signal_gauge,
+    get_education_section,
 )
 
 
@@ -171,6 +172,9 @@ def _render_overview(summaries: dict):
 
     return html.Div(
         [
+            # Educational guide
+            get_education_section("overview"),
+
             # Summary cards row
             dbc.Row(cards, className="mb-4 g-3"),
 
@@ -258,6 +262,9 @@ def _render_sp500(summaries: dict):
 
     return html.Div(
         [
+            # Educational guide
+            get_education_section("sp500"),
+
             # Signal cards row
             dbc.Row(index_cards, className="mb-3 g-2"),
 
@@ -343,6 +350,9 @@ def _render_oil_gas(summaries: dict):
     xle_tech = xle_data.get("components", {}).get("technical", {}).get("detail", {})
 
     return html.Div([
+        # Educational guide
+        get_education_section("oil_gas"),
+
         # Signal cards
         dbc.Row(cards, className="mb-3 g-2"),
 
@@ -422,6 +432,9 @@ def _render_gold(summaries: dict):
         safe_haven_text = "Safe-haven data loading..."
 
     return html.Div([
+        # Educational guide
+        get_education_section("gold"),
+
         # Signal cards
         dbc.Row(cards, className="mb-3 g-2"),
 
@@ -489,6 +502,9 @@ def _render_defense(summaries: dict):
     heatmap = daily_change_heatmap(quotes, symbols)
 
     return html.Div([
+        # Educational guide
+        get_education_section("defense"),
+
         # Signal cards
         dbc.Row(cards, className="mb-3 g-2"),
 
@@ -562,6 +578,9 @@ def _render_fx(summaries: dict):
             weak_pairs.append(name)
 
     return html.Div([
+        # Educational guide
+        get_education_section("fx"),
+
         # Daily change heatmap at top
         html.H6("FX Daily Changes", style={"color": "#aaa"}),
         heatmap,

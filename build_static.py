@@ -142,6 +142,35 @@ def fig_to_div(fig, uid=""):
     return plotly.io.to_html(fig, full_html=False, include_plotlyjs=False, div_id=uid if uid else None)
 
 
+def build_education_html(tab_key):
+    """Generate expandable educational section HTML for a tab."""
+    from dashboard.components import EDUCATION
+    content = EDUCATION.get(tab_key)
+    if not content:
+        return ""
+
+    tips_html = ""
+    for i, (title, body) in enumerate(content["tips"]):
+        tip_id = f"tip-{tab_key}-{i}"
+        tips_html += f'''
+        <details class="learn-tip">
+            <summary>{title}</summary>
+            <div class="tip-body">{body}</div>
+        </details>'''
+
+    return f'''
+    <div class="learn-section">
+        <div class="learn-header">
+            <span class="learn-badge">Learn</span>
+            <span class="learn-title">{content["title"]}</span>
+        </div>
+        <div class="learn-body">
+            <p class="learn-intro">{content["intro"]}</p>
+            {tips_html}
+        </div>
+    </div>'''
+
+
 # ── HTML template ────────────────────────────────────────────────────────────
 
 def signal_badge_html(signal, color):
@@ -276,6 +305,7 @@ def build_html(summaries, fg, vix):
         sections_html += f'''
         <section class="tab-section" id="section-{cat_key}">
             <h2 class="section-title">{label}</h2>
+            {build_education_html(cat_key)}
             <div class="sig-cards-row">{sig_cards}</div>
             <div class="two-col">
                 <div class="col-main">
@@ -342,6 +372,17 @@ a {{ color:#42a5f5; }}
 .sub-heading {{ color:#aaa; font-size:0.9rem; margin:10px 0 8px; }}
 .news-box {{ background:#1e1e2f; border:1px solid #333; border-radius:8px; padding:15px; margin-top:15px; max-height:300px; overflow-y:auto; }}
 .signal-badge {{ display:inline-block; }}
+.learn-section {{ background:#1e1e2f; border:1px solid #42a5f5; border-radius:10px; margin-bottom:20px; overflow:hidden; }}
+.learn-header {{ background:#12122a; padding:12px 18px; border-bottom:1px solid #333; }}
+.learn-badge {{ background:#42a5f5; color:#000; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-right:10px; }}
+.learn-title {{ color:white; font-size:1rem; }}
+.learn-body {{ padding:15px 18px; }}
+.learn-intro {{ color:#bbb; font-size:0.95rem; line-height:1.7; margin-bottom:15px; }}
+.learn-tip {{ margin-bottom:8px; }}
+.learn-tip summary {{ color:#42a5f5; cursor:pointer; padding:8px 12px; border-radius:6px; font-size:0.9rem; transition:background 0.15s; }}
+.learn-tip summary:hover {{ background:rgba(66,165,245,0.1); }}
+.learn-tip[open] summary {{ color:white; font-weight:bold; }}
+.tip-body {{ color:#ccc; font-size:0.9rem; line-height:1.6; padding:8px 12px 12px 24px; }}
 .footer {{ text-align:center; color:#555; font-size:0.75rem; margin-top:30px; padding:15px 0; border-top:1px solid #222; }}
 ::-webkit-scrollbar {{ width:6px; }}
 ::-webkit-scrollbar-track {{ background:#1a1a2e; }}
@@ -372,6 +413,7 @@ a {{ color:#42a5f5; }}
 
 <!-- Overview -->
 <section id="section-overview">
+    {build_education_html("overview")}
     <div class="cat-cards">{cat_cards_html}</div>
     <div class="overview-grid">
         <div>{fg_gauge}</div>

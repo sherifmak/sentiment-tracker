@@ -91,6 +91,34 @@ body {
     color: #8ab4f8 !important;
 }
 
+/* Learn section accordion overrides */
+.accordion-item {
+    background-color: #1a1a2e !important;
+    border-color: #333 !important;
+}
+
+.accordion-button {
+    background-color: #1a1a2e !important;
+    color: #42a5f5 !important;
+    font-size: 0.9rem;
+    padding: 10px 15px;
+    box-shadow: none !important;
+}
+
+.accordion-button:not(.collapsed) {
+    color: white !important;
+    background-color: #222244 !important;
+}
+
+.accordion-button::after {
+    filter: invert(0.6);
+}
+
+.accordion-body {
+    background-color: #1a1a2e !important;
+    border-top: 1px solid #333 !important;
+}
+
 /* Plotly chart backgrounds */
 .js-plotly-plot .plotly .main-svg {
     background: transparent !important;
